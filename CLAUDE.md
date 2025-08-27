@@ -37,6 +37,19 @@ curl -X POST http://localhost:8000/api/query -H "Content-Type: application/json"
 curl http://localhost:8000/api/courses
 ```
 
+**Code Quality & Formatting:**
+```bash
+# Format all Python code with Black
+chmod +x format.sh && ./format.sh
+
+# Run complete quality checks (formatting + tests)
+chmod +x quality-check.sh && ./quality-check.sh
+
+# Manual formatting (if scripts don't work)
+export PATH="/Users/deirdreathaide/Library/Python/3.9/bin:$PATH"
+black backend/ main.py
+```
+
 ## Architecture Overview
 
 ### Core System Design
