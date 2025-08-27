@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System Query Flow</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+        .layer {
+            background: #ffffff;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+        .layer-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+            background: #3498db;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin: -15px -15px 15px -15px;
+            text-align: center;
+        }
+        .frontend { border-color: #e74c3c; }
+        .frontend .layer-title { background: #e74c3c; }
+        
+        .api { border-color: #f39c12; }
+        .api .layer-title { background: #f39c12; }
+        
+        .rag { border-color: #9b59b6; }
+        .rag .layer-title { background: #9b59b6; }
+        
+        .ai { border-color: #27ae60; }
+        .ai .layer-title { background: #27ae60; }
+        
+        .tools { border-color: #16a085; }
+        .tools .layer-title { background: #16a085; }
+        
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 0 5px 5px 0;
+            position: relative;
+        }
+        .step-number {
+            background: #3498db;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex-grow: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .step-detail {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .code-snippet {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+        .arrow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 30px;
+            font-size: 24px;
+            color: #3498db;
+        }
+        .arrow::before {
+            content: "↓";
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+        .parallel {
+            display: flex;
+            gap: 20px;
+        }
+        .parallel .step {
+            flex: 1;
+        }
+        .decision {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            border-radius: 5px;
+        }
+        .decision .step-number {
+            background: #ffc107;
+            color: #000;
+        }
+        .branch {
+            margin-left: 30px;
+            padding-left: 15px;
+            border-left: 2px dashed #dee2e6;
+        }
+        .return-path {
+            background: linear-gradient(to right, #e8f5e8, #f8f9fa);
+            border-left-color: #28a745;
+        }
+        .return-path .step-number {
+            background: #28a745;
+        }
+        .flow-line {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            background: #3498db;
+            height: 20px;
+            top: -10px;
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 RAG System Query Processing Flow</h1>
+        
+        <div class="flow-diagram">
+            <!-- Frontend Layer -->
+            <div class="layer frontend">
+                <div class="layer-title">📱 FRONTEND (JavaScript - script.js)</div>
+                
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <div class="step-title">User Input Capture</div>
+                        <div class="step-detail">User types query and triggers sendMessage()</div>
+                        <div class="code-snippet">sendMessage() → chatInput.value.trim()</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <div class="step-title">UI State Management</div>
+                        <div class="step-detail">Disable input, show loading animation, add user message to chat</div>
+                        <div class="code-snippet">chatInput.disabled = true; addMessage(query, 'user');</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <div class="step-title">API Request</div>
+                        <div class="step-detail">POST to /api/query with JSON payload</div>
+                        <div class="code-snippet">fetch('/api/query', { 
+  method: 'POST',
+  body: JSON.stringify({ query, session_id })
+})</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <!-- API Layer -->
+            <div class="layer api">
+                <div class="layer-title">🌐 BACKEND API (FastAPI - app.py)</div>
+                
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <div class="step-content">
+                        <div class="step-title">Request Validation</div>
+                        <div class="step-detail">Validate against QueryRequest Pydantic model</div>
+                        <div class="code-snippet">@app.post("/api/query", response_model=QueryResponse)</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <div class="step-content">
+                        <div class="step-title">Session Management</div>
+                        <div class="step-detail">Create new session if none provided</div>
+                        <div class="code-snippet">if not session_id:
+  session_id = rag_system.session_manager.create_session()</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">6</span>
+                    <div class="step-content">
+                        <div class="step-title">RAG System Delegation</div>
+                        <div class="step-detail">Pass query to RAG system orchestrator</div>
+                        <div class="code-snippet">answer, sources = rag_system.query(request.query, session_id)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <!-- RAG System Layer -->
+            <div class="layer rag">
+                <div class="layer-title">🧠 RAG ORCHESTRATOR (rag_system.py)</div>
+                
+                <div class="step">
+                    <span class="step-number">7</span>
+                    <div class="step-content">
+                        <div class="step-title">Query Preparation</div>
+                        <div class="step-detail">Format prompt for AI system</div>
+                        <div class="code-snippet">prompt = f"Answer this question about course materials: {query}"</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">8</span>
+                    <div class="step-content">
+                        <div class="step-title">Context Retrieval</div>
+                        <div class="step-detail">Get conversation history for session context</div>
+                        <div class="code-snippet">history = self.session_manager.get_conversation_history(session_id)</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">9</span>
+                    <div class="step-content">
+                        <div class="step-title">AI Generation Call</div>
+                        <div class="step-detail">Delegate to AI generator with tool access</div>
+                        <div class="code-snippet">response = self.ai_generator.generate_response(
+  query=prompt,
+  tools=self.tool_manager.get_tool_definitions(),
+  tool_manager=self.tool_manager
+)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <!-- AI Generation Layer -->
+            <div class="layer ai">
+                <div class="layer-title">🤖 AI GENERATION (ai_generator.py + Anthropic Claude)</div>
+                
+                <div class="step decision">
+                    <span class="step-number">10</span>
+                    <div class="step-content">
+                        <div class="step-title">Query Classification</div>
+                        <div class="step-detail">Claude decides: General knowledge OR Course-specific content?</div>
+                        <div class="code-snippet">System Prompt: "Use search tool ONLY for course-specific questions"</div>
+                    </div>
+                </div>
+                
+                <div class="parallel">
+                    <div class="branch">
+                        <div class="step">
+                            <span class="step-number">11a</span>
+                            <div class="step-content">
+                                <div class="step-title">General Knowledge Path</div>
+                                <div class="step-detail">Answer directly from Claude's training data</div>
+                                <div class="code-snippet">No tool usage required</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="branch">
+                        <div class="step">
+                            <span class="step-number">11b</span>
+                            <div class="step-content">
+                                <div class="step-title">Course-Specific Path</div>
+                                <div class="step-detail">Claude calls search_course_content tool</div>
+                                <div class="code-snippet">tool_use: {
+  "name": "search_course_content",
+  "input": { "query": "...", "course_name": "..." }
+}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <!-- Tools Layer -->
+            <div class="layer tools">
+                <div class="layer-title">🔍 SEARCH TOOLS (search_tools.py + vector_store.py)</div>
+                
+                <div class="step">
+                    <span class="step-number">12</span>
+                    <div class="step-content">
+                        <div class="step-title">Tool Execution</div>
+                        <div class="step-detail">CourseSearchTool.execute() called with parameters</div>
+                        <div class="code-snippet">execute(query, course_name=None, lesson_number=None)</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">13</span>
+                    <div class="step-content">
+                        <div class="step-title">Vector Search</div>
+                        <div class="step-detail">ChromaDB semantic search with metadata filtering</div>
+                        <div class="code-snippet">results = self.store.search(
+  query_text=query,
+  course_filter=course_name,
+  lesson_filter=lesson_number
+)</div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">14</span>
+                    <div class="step-content">
+                        <div class="step-title">Results Processing</div>
+                        <div class="step-detail">Format search results and track sources</div>
+                        <div class="code-snippet">self.last_sources = [chunk.course_title for chunk in results]</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <!-- Return Path -->
+            <div class="layer ai">
+                <div class="layer-title">🤖 AI SYNTHESIS</div>
+                
+                <div class="step return-path">
+                    <span class="step-number">15</span>
+                    <div class="step-content">
+                        <div class="step-title">Response Generation</div>
+                        <div class="step-detail">Claude synthesizes search results into coherent answer</div>
+                        <div class="code-snippet">Claude processes tool results → final response</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <div class="layer rag">
+                <div class="layer-title">🧠 RAG ORCHESTRATOR</div>
+                
+                <div class="step return-path">
+                    <span class="step-number">16</span>
+                    <div class="step-content">
+                        <div class="step-title">Source Collection & History Update</div>
+                        <div class="step-detail">Gather sources from tool manager, update conversation history</div>
+                        <div class="code-snippet">sources = self.tool_manager.get_last_sources()
+self.session_manager.add_exchange(session_id, query, response)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <div class="layer api">
+                <div class="layer-title">🌐 BACKEND API</div>
+                
+                <div class="step return-path">
+                    <span class="step-number">17</span>
+                    <div class="step-content">
+                        <div class="step-title">Response Packaging</div>
+                        <div class="step-detail">Wrap in QueryResponse model and return JSON</div>
+                        <div class="code-snippet">return QueryResponse(
+  answer=answer,
+  sources=sources,
+  session_id=session_id
+)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow"></div>
+            
+            <div class="layer frontend">
+                <div class="layer-title">📱 FRONTEND</div>
+                
+                <div class="step return-path">
+                    <span class="step-number">18</span>
+                    <div class="step-content">
+                        <div class="step-title">Response Processing</div>
+                        <div class="step-detail">Parse JSON, render Markdown, display sources, re-enable input</div>
+                        <div class="code-snippet">loadingMessage.remove();
+addMessage(data.answer, 'assistant', data.sources);
+chatInput.disabled = false;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>Frontend Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>API Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9b59b6;"></div>
+                <span>RAG Orchestrator</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                <span>AI Generation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #16a085;"></div>
+                <span>Search Tools</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #28a745;"></div>
+                <span>Return Path</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

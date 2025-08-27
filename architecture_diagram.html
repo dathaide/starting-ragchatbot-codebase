@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System Architecture</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .architecture {
+            position: relative;
+            height: 800px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            overflow: visible;
+        }
+        
+        /* Component Styles */
+        .component {
+            position: absolute;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid;
+        }
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .component-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .component-details {
+            font-size: 11px;
+            line-height: 1.3;
+            opacity: 0.8;
+        }
+        .component-file {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        /* Frontend Layer */
+        .frontend {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-color: #c44569;
+            color: white;
+        }
+        .web-ui { top: 50px; left: 50px; width: 200px; height: 120px; }
+        .js-client { top: 50px; right: 50px; width: 200px; height: 120px; }
+        
+        /* API Gateway Layer */
+        .api-gateway {
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            border-color: #ff6348;
+            color: #2c3e50;
+        }
+        .fastapi { top: 220px; left: 50%; transform: translateX(-50%); width: 250px; height: 100px; }
+        
+        /* Core Application Layer */
+        .core-app {
+            background: linear-gradient(135deg, #a55eea, #26de81);
+            border-color: #574b90;
+            color: white;
+        }
+        .rag-orchestrator { top: 370px; left: 100px; width: 200px; height: 120px; }
+        .session-manager { top: 370px; right: 100px; width: 180px; height: 120px; }
+        
+        /* AI & Tools Layer */
+        .ai-tools {
+            background: linear-gradient(135deg, #20bf6b, #01a3a4);
+            border-color: #0fb9b1;
+            color: white;
+        }
+        .ai-generator { top: 540px; left: 80px; width: 180px; height: 100px; }
+        .tool-manager { top: 540px; left: 300px; width: 160px; height: 100px; }
+        .search-tool { top: 540px; right: 80px; width: 180px; height: 100px; }
+        
+        /* Data Layer */
+        .data-layer {
+            background: linear-gradient(135deg, #4834d4, #686de0);
+            border-color: #30336b;
+            color: white;
+        }
+        .vector-store { top: 680px; left: 100px; width: 180px; height: 80px; }
+        .chromadb { top: 680px; left: 320px; width: 160px; height: 80px; }
+        .doc-processor { top: 680px; right: 100px; width: 180px; height: 80px; }
+        
+        /* External Services */
+        .external {
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            border-color: #e84393;
+            color: #2c3e50;
+        }
+        .anthropic { top: 100px; left: 50%; transform: translateX(-50%); width: 160px; height: 80px; }
+        
+        /* Data Flow Arrows */
+        .arrow {
+            position: absolute;
+            z-index: 10;
+        }
+        .arrow-line {
+            stroke: #3498db;
+            stroke-width: 3;
+            fill: none;
+            marker-end: url(#arrowhead);
+            animation: flow 3s ease-in-out infinite;
+        }
+        .arrow-line.return {
+            stroke: #27ae60;
+            stroke-dasharray: 5,5;
+        }
+        .arrow-line.tool-call {
+            stroke: #e74c3c;
+            stroke-width: 2;
+        }
+        .arrow-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #2c3e50;
+            text-anchor: middle;
+        }
+        
+        @keyframes flow {
+            0%, 100% { stroke-dashoffset: 0; }
+            50% { stroke-dashoffset: 10; }
+        }
+        
+        /* Layer Labels */
+        .layer-label {
+            position: absolute;
+            right: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #7f8c8d;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        .layer-frontend { top: 60px; }
+        .layer-api { top: 230px; }
+        .layer-core { top: 380px; }
+        .layer-ai { top: 550px; }
+        .layer-data { top: 690px; }
+        
+        /* Query Path Highlights */
+        .query-path {
+            position: absolute;
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed #3498db;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+        .path-1 { top: 45px; left: 45px; width: 410px; height: 130px; }
+        .path-2 { top: 215px; left: 170px; width: 260px; height: 110px; }
+        .path-3 { top: 365px; left: 95px; width: 490px; height: 130px; }
+        .path-4 { top: 535px; left: 75px; width: 550px; height: 110px; }
+        .path-5 { top: 675px; left: 95px; width: 490px; height: 90px; }
+        
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 11px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        /* Query Steps */
+        .step-numbers {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background: #e74c3c;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        .step-1 { top: 30px; left: 30px; }
+        .step-2 { top: 200px; left: 50%; transform: translateX(-50%); }
+        .step-3 { top: 350px; left: 50px; }
+        .step-4 { top: 520px; left: 250px; }
+        .step-5 { top: 660px; left: 50%; transform: translateX(-50%); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ RAG System Architecture</h1>
+        
+        <div class="architecture">
+            <!-- SVG for arrows -->
+            <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#3498db" />
+                    </marker>
+                    <marker id="arrowhead-return" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#27ae60" />
+                    </marker>
+                    <marker id="arrowhead-tool" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+                    </marker>
+                </defs>
+                
+                <!-- Request Flow -->
+                <line class="arrow-line" x1="150" y1="170" x2="300" y2="220" stroke-dasharray="8,4"/>
+                <line class="arrow-line" x1="350" y1="320" x2="200" y2="370" stroke-dasharray="8,4"/>
+                <line class="arrow-line" x1="200" y1="490" x2="160" y2="540" stroke-dasharray="8,4"/>
+                <line class="arrow-line" x1="380" y1="640" x2="380" y2="680" stroke-dasharray="8,4"/>
+                
+                <!-- Tool Calls -->
+                <line class="arrow-line tool-call" x1="260" y1="590" x2="380" y2="590" marker-end="url(#arrowhead-tool)"/>
+                <line class="arrow-line tool-call" x1="460" y1="640" x2="400" y2="680" marker-end="url(#arrowhead-tool)"/>
+                
+                <!-- Return Flow -->
+                <line class="arrow-line return" x1="400" y1="680" x2="460" y2="640" marker-end="url(#arrowhead-return)"/>
+                <line class="arrow-line return" x1="380" y1="590" x2="260" y2="590" marker-end="url(#arrowhead-return)" stroke-dasharray="5,5"/>
+                <line class="arrow-line return" x1="160" y1="540" x2="200" y2="490" marker-end="url(#arrowhead-return)" stroke-dasharray="5,5"/>
+                <line class="arrow-line return" x1="200" y1="370" x2="350" y2="320" marker-end="url(#arrowhead-return)" stroke-dasharray="5,5"/>
+                <line class="arrow-line return" x1="300" y1="220" x2="150" y2="170" marker-end="url(#arrowhead-return)" stroke-dasharray="5,5"/>
+                
+                <!-- External API Call -->
+                <line class="arrow-line" x1="160" y1="540" x2="180" y2="180" stroke-dasharray="3,3"/>
+                <line class="arrow-line return" x1="180" y1="180" x2="160" y2="540" marker-end="url(#arrowhead-return)" stroke-dasharray="3,3"/>
+            </svg>
+            
+            <!-- Query Path Highlights -->
+            <div class="query-path path-1"></div>
+            <div class="query-path path-2"></div>
+            <div class="query-path path-3"></div>
+            <div class="query-path path-4"></div>
+            <div class="query-path path-5"></div>
+            
+            <!-- Step Numbers -->
+            <div class="step-numbers step-1">1</div>
+            <div class="step-numbers step-2">2</div>
+            <div class="step-numbers step-3">3</div>
+            <div class="step-numbers step-4">4</div>
+            <div class="step-numbers step-5">5</div>
+            
+            <!-- Layer Labels -->
+            <div class="layer-label layer-frontend">PRESENTATION</div>
+            <div class="layer-label layer-api">API GATEWAY</div>
+            <div class="layer-label layer-core">BUSINESS LOGIC</div>
+            <div class="layer-label layer-ai">AI & TOOLS</div>
+            <div class="layer-label layer-data">DATA ACCESS</div>
+            
+            <!-- Frontend Components -->
+            <div class="component frontend web-ui">
+                <div class="component-title">📱 Web UI</div>
+                <div class="component-details">
+                    Chat Interface<br>
+                    Loading States<br>
+                    Message Display
+                </div>
+                <div class="component-file">index.html</div>
+            </div>
+            
+            <div class="component frontend js-client">
+                <div class="component-title">⚡ JavaScript Client</div>
+                <div class="component-details">
+                    Event Handling<br>
+                    API Communication<br>
+                    State Management
+                </div>
+                <div class="component-file">script.js</div>
+            </div>
+            
+            <!-- External Services -->
+            <div class="component external anthropic">
+                <div class="component-title">🤖 Anthropic Claude</div>
+                <div class="component-details">
+                    LLM Processing<br>
+                    Tool Usage
+                </div>
+                <div class="component-file">External API</div>
+            </div>
+            
+            <!-- API Gateway -->
+            <div class="component api-gateway fastapi">
+                <div class="component-title">🌐 FastAPI Server</div>
+                <div class="component-details">
+                    Request Validation<br>
+                    Response Formatting<br>
+                    Error Handling<br>
+                    Static File Serving
+                </div>
+                <div class="component-file">app.py</div>
+            </div>
+            
+            <!-- Core Application -->
+            <div class="component core-app rag-orchestrator">
+                <div class="component-title">🧠 RAG Orchestrator</div>
+                <div class="component-details">
+                    Query Processing<br>
+                    Component Coordination<br>
+                    Response Assembly
+                </div>
+                <div class="component-file">rag_system.py</div>
+            </div>
+            
+            <div class="component core-app session-manager">
+                <div class="component-title">💬 Session Manager</div>
+                <div class="component-details">
+                    Conversation History<br>
+                    Context Maintenance<br>
+                    Memory Management
+                </div>
+                <div class="component-file">session_manager.py</div>
+            </div>
+            
+            <!-- AI & Tools Layer -->
+            <div class="component ai-tools ai-generator">
+                <div class="component-title">🤖 AI Generator</div>
+                <div class="component-details">
+                    Claude API Client<br>
+                    Prompt Management<br>
+                    Response Generation
+                </div>
+                <div class="component-file">ai_generator.py</div>
+            </div>
+            
+            <div class="component ai-tools tool-manager">
+                <div class="component-title">🔧 Tool Manager</div>
+                <div class="component-details">
+                    Tool Registration<br>
+                    Execution Control<br>
+                    Source Tracking
+                </div>
+                <div class="component-file">search_tools.py</div>
+            </div>
+            
+            <div class="component ai-tools search-tool">
+                <div class="component-title">🔍 Search Tool</div>
+                <div class="component-details">
+                    Content Search<br>
+                    Course Filtering<br>
+                    Result Formatting
+                </div>
+                <div class="component-file">search_tools.py</div>
+            </div>
+            
+            <!-- Data Layer -->
+            <div class="component data-layer vector-store">
+                <div class="component-title">📊 Vector Store</div>
+                <div class="component-details">
+                    Semantic Search<br>
+                    Metadata Filtering<br>
+                    Result Ranking
+                </div>
+                <div class="component-file">vector_store.py</div>
+            </div>
+            
+            <div class="component data-layer chromadb">
+                <div class="component-title">🗃️ ChromaDB</div>
+                <div class="component-details">
+                    Vector Database<br>
+                    Embeddings Storage<br>
+                    Similarity Search
+                </div>
+                <div class="component-file">External DB</div>
+            </div>
+            
+            <div class="component data-layer doc-processor">
+                <div class="component-title">📄 Doc Processor</div>
+                <div class="component-details">
+                    Text Chunking<br>
+                    Metadata Extraction<br>
+                    Content Preparation
+                </div>
+                <div class="component-file">document_processor.py</div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="legend">
+                <h4 style="margin: 0 0 10px 0;">Architecture Layers</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);"></div>
+                    <span>Frontend Layer</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #feca57, #ff9ff3);"></div>
+                    <span>API Gateway</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #a55eea, #26de81);"></div>
+                    <span>Business Logic</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #20bf6b, #01a3a4);"></div>
+                    <span>AI & Tools</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #4834d4, #686de0);"></div>
+                    <span>Data Access</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #fd79a8, #fdcb6e);"></div>
+                    <span>External Services</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Architecture Description -->
+        <div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2c3e50; margin-top: 0;">🎯 Key Architectural Principles</h3>
+                <ul style="line-height: 1.6;">
+                    <li><strong>Layered Architecture:</strong> Clear separation of concerns across 5 layers</li>
+                    <li><strong>Tool-Based AI:</strong> Claude autonomously decides when to search vs. answer directly</li>
+                    <li><strong>Semantic Search:</strong> Vector embeddings enable intelligent content retrieval</li>
+                    <li><strong>Session Management:</strong> Conversation context maintained across queries</li>
+                    <li><strong>Modular Design:</strong> Each component has single responsibility</li>
+                </ul>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <h3 style="color: #2c3e50; margin-top: 0;">🔄 Data Flow Patterns</h3>
+                <ul style="line-height: 1.6;">
+                    <li><strong>Request Flow:</strong> Frontend → API → RAG → AI → Tools → Data</li>
+                    <li><strong>Tool Calls:</strong> AI Generator ↔ Search Tools ↔ Vector Store</li>
+                    <li><strong>External API:</strong> AI Generator ↔ Anthropic Claude</li>
+                    <li><strong>Response Flow:</strong> Data → Tools → AI → RAG → API → Frontend</li>
+                    <li><strong>Context Flow:</strong> Session Manager maintains conversation state</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

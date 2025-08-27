@@ -40,16 +40,25 @@ class QueryRequest(BaseModel):
     query: str
     session_id: Optional[str] = None
 
+class SourceData(BaseModel):
+    """Model for source citation with optional link"""
+    text: str
+    url: Optional[str] = None
+
 class QueryResponse(BaseModel):
     """Response model for course queries"""
     answer: str
-    sources: List[str]
+    sources: List[SourceData]
     session_id: str
 
 class CourseStats(BaseModel):
     """Response model for course statistics"""
     total_courses: int
     course_titles: List[str]
+
+class ClearSessionRequest(BaseModel):
+    """Request model for clearing a session"""
+    session_id: str
 
 # API Endpoints
 
@@ -65,9 +74,25 @@ async def query_documents(request: QueryRequest):
         # Process query using RAG system
         answer, sources = rag_system.query(request.query, session_id)
         
+        # Convert sources to SourceData objects
+        structured_sources = []
+        for source in sources:
+            if isinstance(source, dict):
+                # New structured format with text and url
+                structured_sources.append(SourceData(
+                    text=source.get("text", "Unknown Source"),
+                    url=source.get("url")
+                ))
+            else:
+                # Legacy string format - convert to structured
+                structured_sources.append(SourceData(
+                    text=str(source),
+                    url=None
+                ))
+        
         return QueryResponse(
             answer=answer,
-            sources=sources,
+            sources=structured_sources,
             session_id=session_id
         )
     except Exception as e:
@@ -82,6 +107,15 @@ async def get_course_stats():
             total_courses=analytics["total_courses"],
             course_titles=analytics["course_titles"]
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/clear-session")
+async def clear_session(request: ClearSessionRequest):
+    """Clear conversation history for a specific session"""
+    try:
+        rag_system.session_manager.clear_session(request.session_id)
+        return {"status": "success", "message": f"Session {request.session_id} cleared"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -116,4 +150,4 @@ class DevStaticFiles(StaticFiles):
     
     
 # Serve static files for the frontend
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
+app.mount("/", DevStaticFiles(directory="../frontend", html=True), name="static")

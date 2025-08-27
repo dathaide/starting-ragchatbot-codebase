@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -29,6 +30,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New Chat button
+    newChatButton.addEventListener('click', startNewChat);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -122,10 +125,65 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Group sources by course for better organization
+        const courseGroups = {};
+        sources.forEach((source, index) => {
+            // Extract course name and lesson info
+            const match = source.text.match(/^(.+?) - Lesson (\d+)$/);
+            if (match) {
+                const courseName = match[1];
+                const lessonNum = match[2];
+                if (!courseGroups[courseName]) {
+                    courseGroups[courseName] = [];
+                }
+                courseGroups[courseName].push({
+                    lesson: lessonNum,
+                    url: source.url,
+                    text: source.text
+                });
+            } else {
+                // Handle sources without lesson numbers
+                if (!courseGroups['Other']) {
+                    courseGroups['Other'] = [];
+                }
+                courseGroups['Other'].push({
+                    lesson: '',
+                    url: source.url,
+                    text: source.text
+                });
+            }
+        });
+
+        // Create table HTML
+        let tableHtml = '<div class="sources-table"><table>';
+        tableHtml += '<thead><tr><th>Course</th><th>Lesson</th><th>Link</th></tr></thead>';
+        tableHtml += '<tbody>';
+        
+        Object.entries(courseGroups).forEach(([courseName, lessons]) => {
+            lessons.sort((a, b) => parseInt(a.lesson) - parseInt(b.lesson));
+            lessons.forEach((lesson, index) => {
+                tableHtml += '<tr>';
+                // Only show course name in first row for this course
+                if (index === 0) {
+                    tableHtml += `<td rowspan="${lessons.length}" class="course-name">${escapeHtml(courseName)}</td>`;
+                }
+                tableHtml += `<td class="lesson-num">${lesson.lesson ? `Lesson ${lesson.lesson}` : '-'}</td>`;
+                tableHtml += `<td class="lesson-link">`;
+                if (lesson.url) {
+                    tableHtml += `<a href="${escapeHtml(lesson.url)}" target="_blank" class="source-link">Open Video</a>`;
+                } else {
+                    tableHtml += '<span class="no-link">No link</span>';
+                }
+                tableHtml += '</td></tr>';
+            });
+        });
+        
+        tableHtml += '</tbody></table></div>';
+        
         html += `
             <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <summary class="sources-header">Sources (${sources.length})</summary>
+                <div class="sources-content">${tableHtml}</div>
             </details>
         `;
     }
@@ -145,6 +203,30 @@ function escapeHtml(text) {
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
+
+// Start new chat function for button click
+async function startNewChat() {
+    try {
+        // Clear current session on backend if exists
+        if (currentSessionId) {
+            await fetch(`${API_URL}/clear-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: currentSessionId
+                })
+            });
+        }
+    } catch (error) {
+        console.warn('Failed to clear session on backend:', error);
+        // Continue with frontend cleanup even if backend fails
+    }
+    
+    // Create new session (frontend cleanup)
+    await createNewSession();
+}
 
 async function createNewSession() {
     currentSessionId = null;
