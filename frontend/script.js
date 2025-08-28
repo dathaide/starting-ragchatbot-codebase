@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,8 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     newChatButton = document.getElementById('newChatButton');
+    themeToggle = document.getElementById('themeToggle');
     
     setupEventListeners();
+    initializeTheme();
     createNewSession();
     loadCourseStats();
 });
@@ -32,6 +34,25 @@ function setupEventListeners() {
     
     // New Chat button
     newChatButton.addEventListener('click', startNewChat);
+    
+    // Theme toggle button
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Keyboard navigation for theme toggle
+    themeToggle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
+    
+    // Global keyboard shortcut for theme toggle (Ctrl/Cmd + Shift + T)
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 't') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -270,4 +291,97 @@ async function loadCourseStats() {
             courseTitles.innerHTML = '<span class="error">Failed to load courses</span>';
         }
     }
+}
+
+// Theme Management Functions
+function initializeTheme() {
+    // Check for system preference first, then saved preference, then default to 'dark'
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    let theme;
+    if (savedTheme) {
+        theme = savedTheme;
+    } else if (window.matchMedia) {
+        theme = systemPrefersDark ? 'dark' : 'light';
+    } else {
+        theme = 'dark'; // fallback
+    }
+    
+    setTheme(theme, false); // false = don't save to localStorage on initial load
+    
+    // Listen for system theme changes
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            // Only auto-switch if user hasn't manually set a preference
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light', false);
+            }
+        });
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // Add a subtle animation class for smoother transition
+    document.body.classList.add('theme-transitioning');
+    
+    setTheme(newTheme, true);
+    
+    // Remove the transition class after animation completes
+    setTimeout(() => {
+        document.body.classList.remove('theme-transitioning');
+    }, 300);
+    
+    // Dispatch custom event for other parts of the app to respond to theme changes
+    window.dispatchEvent(new CustomEvent('themeChanged', { 
+        detail: { theme: newTheme } 
+    }));
+}
+
+function setTheme(theme, shouldSave = true) {
+    // Validate theme parameter
+    if (theme !== 'dark' && theme !== 'light') {
+        console.warn('Invalid theme:', theme, 'defaulting to dark');
+        theme = 'dark';
+    }
+    
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Only save to localStorage if explicitly requested (not on initial load from system preference)
+    if (shouldSave) {
+        localStorage.setItem('theme', theme);
+    }
+    
+    // Update aria-label for better accessibility
+    const toggleButton = document.getElementById('themeToggle');
+    if (toggleButton) {
+        toggleButton.setAttribute('aria-label', 
+            `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`);
+        toggleButton.setAttribute('title', 
+            `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+    }
+    
+    // Update meta theme-color for mobile browsers
+    updateMetaThemeColor(theme);
+}
+
+function updateMetaThemeColor(theme) {
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    
+    if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.name = 'theme-color';
+        document.head.appendChild(metaThemeColor);
+    }
+    
+    // Set theme color based on current theme
+    metaThemeColor.content = theme === 'dark' ? '#0f172a' : '#ffffff';
+}
+
+// Utility function to get current theme
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
 }
