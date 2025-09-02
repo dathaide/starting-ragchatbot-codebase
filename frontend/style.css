@@ -779,7 +779,7 @@ details[open] .suggested-header::before {
 .new-chat-button {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: var(--primary-color);
+    background: #475569;
     border: none;
     border-radius: 8px;
     color: white;
@@ -790,24 +790,24 @@ details[open] .suggested-header::before {
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 4px rgba(71, 85, 105, 0.2);
     margin-bottom: 1rem;
 }
 
 .new-chat-button:focus {
     outline: none;
-    box-shadow: 0 0 0 3px var(--focus-ring), 0 2px 4px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.3), 0 2px 4px rgba(71, 85, 105, 0.2);
 }
 
 .new-chat-button:hover {
-    background: var(--primary-hover);
+    background: #374151;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 8px rgba(71, 85, 105, 0.3);
 }
 
 .new-chat-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 4px rgba(71, 85, 105, 0.2);
 }
 
 
